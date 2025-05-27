@@ -28,8 +28,7 @@ contract GasPriceFeeHook is BaseHook {
         uint128 gasPrice = uint128(tx.gasprice);
         // new Average = ((Old Average * # of Txns Tracked) + Current Gas Price) / (# of Txns Tracked + 1)
         movingAverageGasPrice =
-            ((movingAverageGasPrice * movingAverageGasPriceCount) + gasPrice) /
-            (movingAverageGasPriceCount + 1);
+            ((movingAverageGasPrice * movingAverageGasPriceCount) + gasPrice) / (movingAverageGasPriceCount + 1);
 
         movingAverageGasPriceCount++;
     }
@@ -50,37 +49,26 @@ contract GasPriceFeeHook is BaseHook {
         return BASE_FEE;
     }
 
-    function getHookPermissions()
-        public
-        pure
-        override
-        returns (Hooks.Permissions memory)
-    {
-        return
-            Hooks.Permissions({
-                beforeInitialize: true,
-                afterInitialize: false,
-                beforeAddLiquidity: false,
-                beforeRemoveLiquidity: false,
-                afterAddLiquidity: false,
-                afterRemoveLiquidity: false,
-                beforeSwap: true,
-                afterSwap: true,
-                beforeDonate: false,
-                afterDonate: false,
-                beforeSwapReturnDelta: false,
-                afterSwapReturnDelta: false,
-                afterAddLiquidityReturnDelta: false,
-                afterRemoveLiquidityReturnDelta: false
-            });
+    function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+        return Hooks.Permissions({
+            beforeInitialize: true,
+            afterInitialize: false,
+            beforeAddLiquidity: false,
+            beforeRemoveLiquidity: false,
+            afterAddLiquidity: false,
+            afterRemoveLiquidity: false,
+            beforeSwap: true,
+            afterSwap: true,
+            beforeDonate: false,
+            afterDonate: false,
+            beforeSwapReturnDelta: false,
+            afterSwapReturnDelta: false,
+            afterAddLiquidityReturnDelta: false,
+            afterRemoveLiquidityReturnDelta: false
+        });
     }
 
-    function _beforeSwap(
-        address,
-        PoolKey calldata key,
-        SwapParams calldata,
-        bytes calldata
-    )
+    function _beforeSwap(address, PoolKey calldata key, SwapParams calldata, bytes calldata)
         internal
         override
         returns (bytes4, BeforeSwapDelta, uint24)
@@ -88,29 +76,19 @@ contract GasPriceFeeHook is BaseHook {
         uint24 fee = getFee();
 
         uint24 feeWithFlag = fee | LPFeeLibrary.OVERRIDE_FEE_FLAG;
-        return (
-            this.beforeSwap.selector,
-            BeforeSwapDeltaLibrary.ZERO_DELTA,
-            feeWithFlag
-        );
+        return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, feeWithFlag);
     }
 
-    function _afterSwap(
-        address,
-        PoolKey calldata,
-        SwapParams calldata,
-        BalanceDelta,
-        bytes calldata
-    ) internal override returns (bytes4, int128) {
+    function _afterSwap(address, PoolKey calldata, SwapParams calldata, BalanceDelta, bytes calldata)
+        internal
+        override
+        returns (bytes4, int128)
+    {
         updateMovingAverage();
         return (this.afterSwap.selector, 0);
     }
 
-    function _beforeInitialize(
-        address,
-        PoolKey calldata key,
-        uint160
-    ) internal pure override returns (bytes4) {
+    function _beforeInitialize(address, PoolKey calldata key, uint160) internal pure override returns (bytes4) {
         if (!key.fee.isDynamicFee()) revert MustUseDynamicFee();
         return this.beforeInitialize.selector;
     }
