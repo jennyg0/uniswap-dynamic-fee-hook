@@ -75,13 +75,13 @@ contract GasPriceFeeHook is BaseHook {
             });
     }
 
-    function beforeSwap(
+    function _beforeSwap(
         address,
         PoolKey calldata key,
         SwapParams calldata,
         bytes calldata
     )
-        external
+        internal
         override
         returns (bytes4, BeforeSwapDelta, uint24)
     {
@@ -95,22 +95,22 @@ contract GasPriceFeeHook is BaseHook {
         );
     }
 
-    function afterSwap(
+    function _afterSwap(
         address,
         PoolKey calldata,
         SwapParams calldata,
         BalanceDelta,
         bytes calldata
-    ) external override returns (bytes4, int128) {
+    ) internal override returns (bytes4, int128) {
         updateMovingAverage();
         return (this.afterSwap.selector, 0);
     }
 
-    function beforeInitialize(
+    function _beforeInitialize(
         address,
         PoolKey calldata key,
         uint160
-    ) external pure override returns (bytes4) {
+    ) internal pure override returns (bytes4) {
         if (!key.fee.isDynamicFee()) revert MustUseDynamicFee();
         return this.beforeInitialize.selector;
     }
